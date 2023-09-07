@@ -1,0 +1,14 @@
+[package]
+name = "stringify-err"
+authors = ["naturecodevoid"]
+homepage = "https://github.com/naturecodevoid/stringify-err"
+repository = "https://github.com/naturecodevoid/stringify-err"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+syn = { version = "2.0", default-features = false, features = ["full", "parsing", "printing", "clone-impls", "proc-macro"] }
+quote = "1.0"
+
+[lib]
+proc-macro = true
