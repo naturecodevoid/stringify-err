@@ -113,7 +113,8 @@ pub fn stringify_err(_args: TokenStream, input: TokenStream) -> TokenStream {
             #[allow(deprecated)]
             match #self_dot #inner_name(#(#args_without_types),*) #asyncness_await {
                 ::core::result::Result::Ok(ok) => ::core::result::Result::Ok(ok),
-                ::core::result::Result::Err(err) => ::core::result::Result::Err(::std::string::ToString::to_string(&err)),
+                // https://docs.rs/eyre/latest/eyre/struct.Report.html#display-representations
+                ::core::result::Result::Err(err) => ::core::result::Result::Err(format!("{:#}", err)),
             }
         }
     }
