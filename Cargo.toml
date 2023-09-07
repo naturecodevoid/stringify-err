@@ -1,5 +1,6 @@
 [package]
 name = "stringify-err"
+description = "`Result<(), impl std::error::Error>` -> `Result<(), String>`"
 authors = ["naturecodevoid"]
 homepage = "https://github.com/naturecodevoid/stringify-err"
 repository = "https://github.com/naturecodevoid/stringify-err"
