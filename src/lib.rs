@@ -2,12 +2,12 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote, quote_spanned, ToTokens};
 use syn::{
     parse_macro_input, parse_quote, spanned::Spanned, FnArg, ItemFn, Pat, PathArguments,
-    ReturnType, Type, Visibility,
+    ReturnType, Type,
 };
 
 #[proc_macro_attribute]
 pub fn stringify_err(_args: TokenStream, input: TokenStream) -> TokenStream {
-    let mut input = parse_macro_input!(input as ItemFn);
+    let input = parse_macro_input!(input as ItemFn);
 
     if match input.sig.output {
         ReturnType::Default => true,
@@ -79,44 +79,23 @@ pub fn stringify_err(_args: TokenStream, input: TokenStream) -> TokenStream {
         None => quote!(),
     };
 
-    let attrs = input.attrs.clone();
     let vis = input.vis.clone();
+
     let mut sig = input.sig.clone();
     sig.output = parse_quote!(-> ::core::result::Result<#ok_type, ::std::string::String>);
-
     let orig_name = input.sig.ident.clone();
-    let inner_name = format_ident!("_stringify_err_inner_{}", orig_name);
-
-    input.sig.ident = inner_name.clone();
-    input.vis = Visibility::Inherited; // make sure the inner function isn't leaked to the public
-    input.attrs = vec![
-        // we will put the original attributes on the function we make
-        // we also don't want the inner function to appear in docs or autocomplete (if they do, they should be deprecated and give a warning if they are used)
-        parse_quote!(#[doc(hidden)]),
-        parse_quote!(#[deprecated = "inner function for stringify-err. Please do not use!"]),
-        parse_quote!(#[inline(always)]), // let's make sure we don't produce more overhead than we need to, the output should produce similar assembly to the input (besides the end)
-    ];
-
-    // for functions that take a self argument, we will need to put the inner function outside of our new function since we don't know what type self is
-    let (outer_input, inner_input) = if has_self_argument {
-        (Some(input), None)
-    } else {
-        (None, Some(input))
-    };
+    sig.ident = format_ident!("{orig_name}_ffi");
 
     quote! {
-        #outer_input
-
-        #(#attrs)* #vis #sig {
-            #inner_input
-
-            #[allow(deprecated)]
-            match #self_dot #inner_name(#(#args_without_types),*) #asyncness_await {
+        #vis #sig {
+            match #self_dot #orig_name(#(#args_without_types),*) #asyncness_await {
                 ::core::result::Result::Ok(ok) => ::core::result::Result::Ok(ok),
                 // https://docs.rs/eyre/latest/eyre/struct.Report.html#display-representations
                 ::core::result::Result::Err(err) => ::core::result::Result::Err(format!("{:#}", err)),
             }
         }
+
+        #input
     }
     .into()
 }
