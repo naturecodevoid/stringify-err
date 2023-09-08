@@ -94,7 +94,7 @@ pub fn stringify_err(args: TokenStream, input: TokenStream) -> TokenStream {
             match #instance_method #self_dot #orig_name(#(#args_without_types),*) #asyncness_await {
                 ::core::result::Result::Ok(ok) => ::core::result::Result::Ok(ok),
                 // https://docs.rs/eyre/latest/eyre/struct.Report.html#display-representations
-                ::core::result::Result::Err(err) => ::core::result::Result::Err(format!("{:#}", err)),
+                ::core::result::Result::Err(err) => ::core::result::Result::Err(format!("{:?}", err)),
             }
         }
 
