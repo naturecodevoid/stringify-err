@@ -2,11 +2,14 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote, quote_spanned, ToTokens};
 use syn::{
     parse_macro_input, parse_quote, spanned::Spanned, FnArg, ItemFn, Pat, PathArguments,
-    ReturnType, Type,
+    ReturnType, Token, Type,
 };
 
 #[proc_macro_attribute]
-pub fn stringify_err(_args: TokenStream, input: TokenStream) -> TokenStream {
+pub fn stringify_err(args: TokenStream, input: TokenStream) -> TokenStream {
+    let instance_method = syn::parse::<Token!(Self)>(args)
+        .ok()
+        .map(|t| quote!(Self::));
     let input = parse_macro_input!(input as ItemFn);
 
     if match input.sig.output {
@@ -88,7 +91,7 @@ pub fn stringify_err(_args: TokenStream, input: TokenStream) -> TokenStream {
 
     quote! {
         #vis #sig {
-            match #self_dot #orig_name(#(#args_without_types),*) #asyncness_await {
+            match #instance_method #self_dot #orig_name(#(#args_without_types),*) #asyncness_await {
                 ::core::result::Result::Ok(ok) => ::core::result::Result::Ok(ok),
                 // https://docs.rs/eyre/latest/eyre/struct.Report.html#display-representations
                 ::core::result::Result::Err(err) => ::core::result::Result::Err(format!("{:#}", err)),
